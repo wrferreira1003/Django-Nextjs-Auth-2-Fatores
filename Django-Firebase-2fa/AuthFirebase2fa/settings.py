@@ -1,6 +1,10 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # Firebase
 import firebase_admin
@@ -149,3 +153,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#Confiquração do email
+DEFAULT_FROM_EMAIL = 'Acesso'
+EMAIL_HOST_USER = 'wrferreiradevpro@wrferreiradevpro.com.br'
+EMAIL_HOST_PASSWORD = 'Well#1003'
+EMAIL_USE_SSL = True  # A configuração SSL usa a porta 465
+EMAIL_PORT = 465
+EMAIL_HOST = 'smtp.kinghost.net'

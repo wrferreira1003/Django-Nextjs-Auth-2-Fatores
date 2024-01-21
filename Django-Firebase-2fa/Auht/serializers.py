@@ -1,37 +1,39 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-import firebase_admin
-from firebase_admin import auth
+from django.core.mail import send_mail
+import random
+import string
 from rest_framework import serializers
-from .models import User
-import uuid
+from .models import User, GerenciadorSystem
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     #Chama a validação padrão primeiro
     def validate(self, attrs):
         data = super().validate(attrs)
-        user = User.objects.get(username=attrs['username'])
+        user = self.user # O usuário autenticado
 
-        #Se o usuario tiver um numero de telefone, vamos gerar um codigo de verificacao
-        if user.phone_number:
-            try:
-                phone_number = user.phone_number
-                print(phone_number)
-                # O Firebase envia o código de verificação para o número de telefone do usuário
-                #verification_id = auth.(phone_number, app=None)
-                #print(verification_id)
+        # Gerar um código de verificação
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        
+        # Salvar o código temporariamente (pode ser no próprio modelo de usuário ou em cache)
+        GerenciadorSystem.objects.create(user=user, code=code)
 
-                #Gerando um identificado unico para essa sessao para controle do 2FA
-                verification_session_id = str(uuid.uuid4())
-                user.verification_session_id = verification_session_id
-                user.save()
+        print(user.email)
+        # Enviar o código via e-mail
+        send_mail(
+            'Seu código de verificação',
+            f'Seu código de verificação é: {code}',
+            'teste@wrweb.net.br',  # Endereço de e-mail de envio
+            [user.email],  # Endereço de e-mail do destinatário
+            fail_silently=False,
+        )
 
-            except firebase_admin.exceptions.FirebaseError as e:
-                raise serializers.ValidationError({'firebase_error': str(e)})
-        else:
-            raise serializers.ValidationError({'phone_number': 'Número de telefone não disponível'})
-
-        return data
+        # Retorne uma resposta personalizada
+        return {
+            "message": "Código de verificação enviado. Por favor, verifique seu e-mail.",
+            "user_id": user.id,  # ID do usuário para referência futura
+            "username": user.username  # Nome de usuário para identificação   
+        }
     
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
